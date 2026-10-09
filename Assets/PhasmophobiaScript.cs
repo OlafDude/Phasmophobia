@@ -55,7 +55,7 @@ public class PhasmophobiaScript : MonoBehaviour{
 
     //Ghost
     public TextMesh ghoName;
-    readonly string[] ghoOptions = { "Banshee", "Demon", "Deogen", "Goryo", "Hantu", "Jinn", "Mare", "Moroi", "Myling", "Obake", "Oni", "Onryo", "Phantom", "Poltergeist", "Raiju", "Revenant", "Shade", "Spirit", "Thaye", "Mimic", "Twins", "Wraith", "Yokai", "Yurei" };
+    readonly string[] ghoOptions = { "Aswang","Banshee", "Dayan", "Deildegast", "Demon", "Deogen", "Gallu", "Goryo", "Hantu", "Jinn", "Kormos", "Mare", "Moroi", "Myling", "Obake", "Obambo", "Oni", "Onryo", "Phantom", "Poltergeist", "Raiju", "Revenant", "Shade", "Spirit", "Thaye", "The Mimic", "The Twins", "Wraith", "Yokai", "Yurei" };
     int ghoIndex;
     int trueGhoIndex;
 
@@ -101,7 +101,7 @@ public class PhasmophobiaScript : MonoBehaviour{
 	readonly string[] toolNames = { "Notebook", "Camera", "D.O.T.S", "EMF", "Spirit Box", "Thermometer", "Black Light" };
 	
 	public TextMesh bookWords;
-	readonly string[] wordOptions = { "Run", "Afraid", "Go Away", "No Escape", "Boom", "Strike", "Behind You" };
+	readonly string[] wordOptions = {"Run", "Afraid", "Go Away", "No Escape", "Boom", "Strike", "Behind You","Die","Explode"};
 	string correctWord;
     float randFloat;
     string[] boxSounds = { "sbhere", "sbadult", "sbkill", "sbbaby", "sbbehind", "sbdad", "sbdaughter", "sbfar" };
@@ -151,6 +151,7 @@ public class PhasmophobiaScript : MonoBehaviour{
         RandomizeCloset();
         PickFavoriteRoom();
         FindColumn();
+        Debug.LogFormat("[Phasmophobia #{0}] Correct ghost type is {1}", moduleId, ghoOptions[trueGhoIndex]);
         StartCoroutine(SanityOverTime());
     }
 
@@ -344,26 +345,26 @@ public class PhasmophobiaScript : MonoBehaviour{
             moduleSolved = true; 
             StopAllCoroutines();
             StartCoroutine(Solved());
-            Debug.LogFormat("Phasmophobia #{0}: Correct submission. Module solved!", moduleId);
+            Debug.LogFormat("[Phasmophobia #{0}] Correct submission. Module solved!", moduleId);
         }
         else{
             StopAllCoroutines(); 
             StartCoroutine(Strike()); 
-            Debug.LogFormat("Phasmophobia #{0}: Incorrect submission.", moduleId);
+            Debug.LogFormat("[Phasmophobia #{0}] Incorrect submission.", moduleId);
         }
     }
 
     IEnumerator Solved(){
+        lScroll.gameObject.SetActive(false);
+        rScroll.gameObject.SetActive(false);
         Audio.PlaySoundAtTransform("dead2", transform);
-        int it = 0; 
-        int sanDec = 1; 
-        float time; 
-        while (it < 100){ 
-            time = Math.Max(0.01f, 0.5f-0.035f*it); 
-            yield return new WaitForSeconds(time);
-            sanity -= sanDec;
+        float duration = 5f;
+        float elapsed = 0f; 
+        while (elapsed < duration){ 
+            sanity = (int)(100-200*(elapsed/duration));
             sanityMeter.text = sanity.ToString() + "%";
-            it++;
+            yield return null;
+            elapsed += Time.deltaTime; 
         } 
         yield return null; 
         Audio.PlaySoundAtTransform("victory", transform);
@@ -372,8 +373,6 @@ public class PhasmophobiaScript : MonoBehaviour{
         dSlot.gameObject.SetActive(false);
         uNav.gameObject.SetActive(false);
         dNav.gameObject.SetActive(false);
-        lScroll.gameObject.SetActive(false);
-        rScroll.gameObject.SetActive(false);
         sanityMeter.text = "sane";
         equipment.gameObject.SetActive(false); 
         submit.gameObject.SetActive(false); 
@@ -384,18 +383,18 @@ public class PhasmophobiaScript : MonoBehaviour{
     }
 
     IEnumerator Strike(){
+        lScroll.gameObject.SetActive(false);
+        rScroll.gameObject.SetActive(false);
         StopCoroutine(SanityOverTime());
         moduleSolved = true; //not actually, just used to disable button presses
         Audio.PlaySoundAtTransform("dead", transform);
-        int it = 0; 
-        int sanDec = 1; 
-        float time; 
-        while (it < 100){ 
-            time = Math.Max(0.01f, 0.5f-0.035f*it); 
-            yield return new WaitForSeconds(time);
-            sanity -= sanDec;
+        float duration = 5f;
+        float elapsed = 0f; 
+        while (elapsed < duration){ 
+            sanity = (int)(100-200*(elapsed/duration));
             sanityMeter.text = sanity.ToString() + "%";
-            it++;
+            yield return null;
+            elapsed += Time.deltaTime; 
         } 
         yield return null; 
         GetComponent<KMBombModule>().HandleStrike(); 
@@ -411,6 +410,7 @@ public class PhasmophobiaScript : MonoBehaviour{
         hunting = false; 
         uNav.gameObject.SetActive(true); 
         dNav.gameObject.SetActive(true); 
+        flashLight.gameObject.SetActive(true); 
         StartCoroutine(SanityOverTime()); 
         moduleSolved = false; 
         yield break; 
@@ -437,44 +437,49 @@ public class PhasmophobiaScript : MonoBehaviour{
         locIndex = UnityEngine.Random.Range(0, locOptions.Length);
         locName.text = locOptions[locIndex];
         roomPic.material = locMats[locIndex];
-        Debug.LogFormat("Phasmophobia #{0}: Location is {1}", moduleId, locOptions[locIndex]);
+        Debug.LogFormat("[Phasmophobia #{0}] Location is {1}", moduleId, locOptions[locIndex]);
     }
 
     void PickGhost(){
         trueGhoIndex = UnityEngine.Random.Range(0, ghoOptions.Length);
-        Debug.LogFormat("Phasmophobia #{0}: Correct ghost type is {1}", moduleId, ghoOptions[trueGhoIndex]);
 		switch (trueGhoIndex){ //0 Book, 1 Cam, 2 Dots, 3 EMF, 4 SB, 5 Thermo, 6 UV
-			case 0: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[6] = true;break;//Banshee
-			case 1: correctEvidence[0] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//Demon
-			case 2: correctEvidence[0] = true; correctEvidence[2] = true; correctEvidence[4] = true;break;//Deogen
-			case 3: correctEvidence[2] = true; correctEvidence[3] = true; correctEvidence[6] = true;break;//goryo
-			case 4: correctEvidence[1] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//hantu
-			case 5: correctEvidence[3] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//jinn
-			case 6: correctEvidence[0] = true; correctEvidence[1] = true; correctEvidence[4] = true;break;//mare
-			case 7: correctEvidence[0] = true; correctEvidence[4] = true; correctEvidence[5] = true;break;//moroi
-			case 8: correctEvidence[0] = true; correctEvidence[3] = true; correctEvidence[6] = true;break;//myling
-			case 9: correctEvidence[1] = true; correctEvidence[3] = true; correctEvidence[6] = true;break;//obake
-			case 10: correctEvidence[2] = true; correctEvidence[3] = true; correctEvidence[5] = true;break;//oni
-			case 11: correctEvidence[1] = true; correctEvidence[4] = true; correctEvidence[5] = true;break;//onryo
-			case 12: correctEvidence[2] = true; correctEvidence[4] = true; correctEvidence[6] = true;break;//phantom
-			case 13: correctEvidence[0] = true; correctEvidence[4] = true; correctEvidence[6] = true;break;//poltergeist
-			case 14: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[3] = true;break;//raiju
-			case 15: correctEvidence[0] = true; correctEvidence[1] = true; correctEvidence[5] = true;break;//revenant
-			case 16: correctEvidence[0] = true; correctEvidence[3] = true; correctEvidence[5] = true;break;//shade
-			case 17: correctEvidence[0] = true; correctEvidence[3] = true; correctEvidence[4] = true;break;//spirit
-			case 18: correctEvidence[0] = true; correctEvidence[1] = true; correctEvidence[2] = true;break;//thaye
-			case 19: correctEvidence[4] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//mimic
-			case 20: correctEvidence[3] = true; correctEvidence[4] = true; correctEvidence[5] = true;break;//twins
-			case 21: correctEvidence[2] = true; correctEvidence[3] = true; correctEvidence[4] = true;break;//wraith
-			case 22: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[4] = true;break;//yokai
-			case 23: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[5] = true;break;//yurei
+            case 0: correctEvidence[0] = true; correctEvidence[2] = true; correctEvidence[5] = true;break;//aswang
+			case 1: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[6] = true;break;//banshee
+            case 2: correctEvidence[1] = true; correctEvidence[3] = true; correctEvidence[4] = true;break;//dayan
+            case 3: correctEvidence[0] = true; correctEvidence[2] = true; correctEvidence[3] = true;break;//deildegast
+			case 4: correctEvidence[0] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//demon
+			case 5: correctEvidence[0] = true; correctEvidence[2] = true; correctEvidence[4] = true;break;//deogen
+            case 6: correctEvidence[3] = true; correctEvidence[4] = true; correctEvidence[6] = true;break;//gallu
+			case 7: correctEvidence[2] = true; correctEvidence[3] = true; correctEvidence[6] = true;break;//goryo
+			case 8: correctEvidence[1] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//hantu
+			case 9: correctEvidence[3] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//jinn
+            case 10: correctEvidence[1] = true; correctEvidence[4] = true; correctEvidence[6] = true;break;//kormos
+			case 11: correctEvidence[0] = true; correctEvidence[1] = true; correctEvidence[4] = true;break;//mare
+			case 12: correctEvidence[0] = true; correctEvidence[4] = true; correctEvidence[5] = true;break;//moroi
+			case 13: correctEvidence[0] = true; correctEvidence[3] = true; correctEvidence[6] = true;break;//myling
+			case 14: correctEvidence[1] = true; correctEvidence[3] = true; correctEvidence[6] = true;break;//obake
+			case 15: correctEvidence[0] = true; correctEvidence[2] = true; correctEvidence[6] = true;break;//obambo
+            case 16: correctEvidence[2] = true; correctEvidence[3] = true; correctEvidence[5] = true;break;//oni
+			case 17: correctEvidence[1] = true; correctEvidence[4] = true; correctEvidence[5] = true;break;//onryo
+			case 18: correctEvidence[2] = true; correctEvidence[4] = true; correctEvidence[6] = true;break;//phantom
+			case 19: correctEvidence[0] = true; correctEvidence[4] = true; correctEvidence[6] = true;break;//poltergeist
+			case 20: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[3] = true;break;//raiju
+			case 21: correctEvidence[0] = true; correctEvidence[1] = true; correctEvidence[5] = true;break;//revenant
+			case 22: correctEvidence[0] = true; correctEvidence[3] = true; correctEvidence[5] = true;break;//shade
+			case 23: correctEvidence[0] = true; correctEvidence[3] = true; correctEvidence[4] = true;break;//spirit
+			case 24: correctEvidence[0] = true; correctEvidence[1] = true; correctEvidence[2] = true;break;//thaye
+			case 25: correctEvidence[4] = true; correctEvidence[5] = true; correctEvidence[6] = true;break;//mimic
+			case 26: correctEvidence[3] = true; correctEvidence[4] = true; correctEvidence[5] = true;break;//twins
+			case 27: correctEvidence[2] = true; correctEvidence[3] = true; correctEvidence[4] = true;break;//wraith
+			case 28: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[4] = true;break;//yokai
+			case 29: correctEvidence[1] = true; correctEvidence[2] = true; correctEvidence[5] = true;break;//yurei
 		}
 		List<string> _correctEvidence = new List<string>();
 		for ( int i = 0; i < correctEvidence.Length; i++){
 			if (correctEvidence[i] == true)
 				_correctEvidence.Add(toolNames[i]);
 		}
-		Debug.LogFormat("Phasmophobia #{0}: Correct evidence is {1}, {2}, {3}", moduleId, _correctEvidence[0], _correctEvidence[1], _correctEvidence[2]);
+		Debug.LogFormat("[Phasmophobia #{0}] Correct evidence is {1}, {2}, {3}", moduleId, _correctEvidence[0], _correctEvidence[1], _correctEvidence[2]);
     }
 
     void ChangeLoc(){
@@ -484,6 +489,8 @@ public class PhasmophobiaScript : MonoBehaviour{
             dNav.gameObject.SetActive(false);
             equipment.SetActive(true);
             scroll.SetActive(true);
+            lScroll.gameObject.SetActive(true);
+            rScroll.gameObject.SetActive(true);
 			inFavRoom = false;
         }
         else if (_roomIndex == 1){
@@ -526,12 +533,12 @@ public class PhasmophobiaScript : MonoBehaviour{
         List<string> interim = roomOptions.ToList();
         interim.Insert(insertIndex, closet);
         _roomOptions = interim.ToArray();
-        Debug.LogFormat("Phasmophobia #{0}: The closet is located between the {1} and the {2}.", moduleId, _roomOptions[insertIndex - 1], _roomOptions[insertIndex + 1]);
+        Debug.LogFormat("[Phasmophobia #{0}] The closet is located between the {1} and the {2}.", moduleId, _roomOptions[insertIndex - 1], _roomOptions[insertIndex + 1]);
     }
 
     void PickFavoriteRoom(){
         favRoomIndex = UnityEngine.Random.Range(0, roomOptions.Length - 3);
-        Debug.LogFormat("Phasmophobia #{0}: The favorite room is the {1}", moduleId, roomOptions[favRoomIndex + 2]);
+        Debug.LogFormat("[Phasmophobia #{0}] The favorite room is the {1}", moduleId, roomOptions[favRoomIndex + 2]);
     }
 
     void LightChange(int x){
@@ -580,8 +587,8 @@ public class PhasmophobiaScript : MonoBehaviour{
 		uNav.gameObject.SetActive(false);
 		dNav.gameObject.SetActive(false);
 		cooldown = true;
-		yield return new WaitForSeconds(0.5f);
-        while (flickering ==true){yield return null;}
+		yield return new WaitForSeconds(0.45f);
+        while (flickering == true){yield return null;}
         flashLight.SetActive(false);
         notepad.SetActive(true);
         Audio.PlaySoundAtTransform("writing", transform);
@@ -597,9 +604,9 @@ public class PhasmophobiaScript : MonoBehaviour{
 		}
 		
 		else{
-			int randWordIndex = UnityEngine.Random.Range(0, wordOptions.Length-1);
+			int randWordIndex = UnityEngine.Random.Range(0, wordOptions.Length);
 			while (randWordIndex == correctCol){
-				randWordIndex = UnityEngine.Random.Range(0, wordOptions.Length-1);
+				randWordIndex = UnityEngine.Random.Range(0, wordOptions.Length);
 			}
 			string randWord = wordOptions[randWordIndex];
 			while (i <= randWord.Length-1) {
@@ -611,7 +618,7 @@ public class PhasmophobiaScript : MonoBehaviour{
 			}
 		}
 		
-		yield return new WaitForSeconds(1.0f);
+		yield return new WaitForSeconds(0.5f);
 		bookWords.text = "";
 		cooldown = false;
 		uNav.gameObject.SetActive(true);
@@ -627,19 +634,17 @@ public class PhasmophobiaScript : MonoBehaviour{
     }
 
 	IEnumerator GhostOrbs(){ //x[-0.065, .024] z[-0.048,0.041]
-		int it = 0;
         int dud = UnityEngine.Random.Range(0,100);
         uNav.gameObject.SetActive(false);
 		dNav.gameObject.SetActive(false);
         cooldown = true; 
-		yield return new WaitForSeconds(0.8f);
-        while (flickering ==true){yield return null;}
+		yield return new WaitForSeconds(0.45f);
+        while (flickering == true){yield return null;}
         flashLight.SetActive(false);
         roomPic.material.color = camColorG; 
         Audio.PlaySoundAtTransform("cambeep", transform);
 
 		if (inFavRoom == true && correctEvidence[1] == true && dud<=60){
-			yield return new WaitForSeconds(1.0f);
 			for (int i = 0; i < correctOrbs;i++) { 
 				camOrbs[i].SetActive(true);
 				camOrbs[i].transform.localPosition = new Vector3(UnityEngine.Random.Range(-0.055f, 0.014f), camOrbs[i].transform.localPosition.y, UnityEngine.Random.Range(-0.038f, 0.031f));
@@ -655,19 +660,26 @@ public class PhasmophobiaScript : MonoBehaviour{
 				camOrbs[i].transform.localPosition = new Vector3(UnityEngine.Random.Range(-0.065f, 0.024f), camOrbs[i].transform.localPosition.y, UnityEngine.Random.Range(-0.048f, 0.041f));
 			}	
 		}
-        while (it < 45){
-			foreach (GameObject orb in camOrbs){
+        float duration = 1.5f; 
+        float elapsed = 0f; 
+        float count = 0f; 
+        while (elapsed < duration){
+            yield return null;
+            if (count > 0.05f){
+                count = 0f; 
+                foreach (GameObject orb in camOrbs){
 				xFloat = UnityEngine.Random.Range(-0.0004f, 0.0004f);
 				zFloat = UnityEngine.Random.Range(-0.0004f, 0.0004f);
-				yield return new WaitForSeconds(0.01f);
                 float yRot = UnityEngine.Random.Range(-15f, 15f);
 				orb.transform.localPosition = new 
 					Vector3(orb.transform.localPosition.x + xFloat, 
 					orb.transform.localPosition.y, 
 					orb.transform.localPosition.z + zFloat);
                     orb.transform.localEulerAngles = new Vector3(orb.transform.localEulerAngles.x, orb.transform.localEulerAngles.y + yRot, orb.transform.localEulerAngles.z);
-			}
-			it++;
+			    }
+            }
+            elapsed += Time.deltaTime; 
+            count += Time.deltaTime; 
 		} 
         roomPic.material.color = camColor;
         cooldown = false;
@@ -687,10 +699,9 @@ public class PhasmophobiaScript : MonoBehaviour{
 		cooldown = true;
 		uNav.gameObject.SetActive(false);
 		dNav.gameObject.SetActive(false);
-		yield return new WaitForSeconds(0.5f);
+		yield return new WaitForSeconds(0.45f);
         while (flickering ==true){yield return null;}
         flashLight.SetActive(false);
-		int i = 0;
 		dots.transform.localPosition = new Vector3(-0.32f, 0.42f, 0.0f);
         int dud = UnityEngine.Random.Range(0,100);
 		if (inFavRoom == true && correctEvidence[2] == true && dud <=60){
@@ -708,24 +719,30 @@ public class PhasmophobiaScript : MonoBehaviour{
         xFloat = UnityEngine.Random.Range(-0.008f, 0.008f);
 		zFloat = UnityEngine.Random.Range(-0.008f, 0.008f);
         float yRot = UnityEngine.Random.Range(-0.2f, 0.2f);
-		while (i < 70) {
-			yield return new WaitForSeconds(0.02f);
-			xFloat += UnityEngine.Random.Range(-0.0008f, 0.0008f);
-			zFloat += UnityEngine.Random.Range(-0.0008f, 0.0008f);
-            yRot += UnityEngine.Random.Range(-0.05f, 0.05f);
-			dots.transform.localPosition = new 
-				Vector3(dots.transform.localPosition.x + xFloat, 
-				dots.transform.localPosition.y, 
-				dots.transform.localPosition.z + zFloat);
-                dots.transform.localEulerAngles = new Vector3(dots.transform.localEulerAngles.x, dots.transform.localEulerAngles.y + yRot,dots.transform.localEulerAngles.z);
-            i++;
+        float duration = 1.5f; 
+        float elapsed = 0f; 
+        float count = 0f; 
+		while (elapsed < duration) {
+            if (count > 0.05f){
+                count = 0; 
+                xFloat += UnityEngine.Random.Range(-0.0008f, 0.0008f);
+			    zFloat += UnityEngine.Random.Range(-0.0008f, 0.0008f);
+                yRot += UnityEngine.Random.Range(-0.05f, 0.05f);
+			    dots.transform.localPosition = new 
+				    Vector3(dots.transform.localPosition.x + xFloat, 
+				    dots.transform.localPosition.y, 
+				    dots.transform.localPosition.z + zFloat);
+                    dots.transform.localEulerAngles = new Vector3(dots.transform.localEulerAngles.x, dots.transform.localEulerAngles.y + yRot,dots.transform.localEulerAngles.z);
+            }
+            yield return null;
+            elapsed += Time.deltaTime; 
+            count += Time.deltaTime; 
 		}
 		dots.SetActive(false);
 		uNav.gameObject.SetActive(true);
 		dNav.gameObject.SetActive(true);
 		flashLight.SetActive(true);
 		cooldown = false;
-        yield return new WaitForSeconds (0.3f);
 		yield break;
 	}
 
@@ -744,7 +761,7 @@ public class PhasmophobiaScript : MonoBehaviour{
         int dud = UnityEngine.Random.Range(0,100);
         if (inFavRoom == true && correctEvidence[3] == true && dud <=60){
             for (int i = 0; i < beepNumber[correctCol]; i++){
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.45f);
             Audio.PlaySoundAtTransform("emfbeep", transform);
             }
 		}
@@ -754,7 +771,7 @@ public class PhasmophobiaScript : MonoBehaviour{
 				emfIndex = UnityEngine.Random.Range(0, beepNumber.Length);
 			}
             for (int i= 0; i < beepNumber[emfIndex]; i++){
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.45f);
             Audio.PlaySoundAtTransform("emfbeep", transform);
             }
 		}
@@ -790,7 +807,7 @@ public class PhasmophobiaScript : MonoBehaviour{
 			}
             Audio.PlaySoundAtTransform(boxSounds[boxIndex], transform);
 		}
-        yield return new WaitForSeconds(1.1f);
+        yield return new WaitForSeconds(1.0f);
 		uNav.gameObject.SetActive(true);
 		dNav.gameObject.SetActive(true);
 		flashLight.SetActive(true);
@@ -807,7 +824,7 @@ public class PhasmophobiaScript : MonoBehaviour{
         cooldown = true;
 		uNav.gameObject.SetActive(false);
 		dNav.gameObject.SetActive(false);
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.45f);
         while (flickering ==true){yield return null;}
         flashLight.SetActive(false);
         roomPic.material.color = coldColor; 
@@ -827,12 +844,13 @@ public class PhasmophobiaScript : MonoBehaviour{
             flake.GetComponent<MeshRenderer>().material = flakeMats[flakeIndex];
         }
         flake.SetActive(true);
-        int it = 0;
         float yRot = UnityEngine.Random.Range(-1f, 1f);
-        while(it < 230){
+        float duration = 1.5f; 
+        float elapsed = 0f; 
+        while(elapsed < duration){
             yield return null;
             flake.transform.localEulerAngles = new Vector3(flake.transform.localEulerAngles.x, flake.transform.localEulerAngles.y + yRot, flake.transform.localEulerAngles.z);
-            it++;
+            elapsed += Time.deltaTime; 
         }
         flake.SetActive(false);
         roomPic.material.color = camColor; 
@@ -853,7 +871,7 @@ public class PhasmophobiaScript : MonoBehaviour{
         cooldown = true;
 		uNav.gameObject.SetActive(false);
 		dNav.gameObject.SetActive(false);
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.45f);
         while (flickering ==true){yield return null;}
         flashLight.SetActive(false);
         uvLightColor = new Color32(0x81, 0x4F, 0xFF, 0xFF);
@@ -872,10 +890,10 @@ public class PhasmophobiaScript : MonoBehaviour{
             }
             uv.GetComponent<MeshRenderer>().material = uvMats[uvIndex];
         }
-        yield return new WaitForSeconds(0.6f);
+        yield return new WaitForSeconds(0.5f);
         uv.SetActive(true);
         uv.transform.localEulerAngles = new Vector3(uv.transform.localEulerAngles.x, UnityEngine.Random.Range(-180, 180), uv.transform.localEulerAngles.z);
-        yield return new WaitForSeconds(1.2f);
+        yield return new WaitForSeconds(1.0f);
         uv.SetActive(false);
 		uNav.gameObject.SetActive(true);
 		dNav.gameObject.SetActive(true);
@@ -894,38 +912,39 @@ public class PhasmophobiaScript : MonoBehaviour{
 
         //0 Book, 1 Cam, 2 Dots, 3 EMF, 4 SB, 5 Thermo, 6 UV
         switch(locIndex){
-            case 0: 
+            case 0: //Tangle
                 favToolOptions = new int[]{5, 3, 1, 2};
                 favToolIndex = favToolOptions[_correctCol]; 
                 break; 
-            case 1:
+            case 1: //Edge
                 favToolOptions = new int[]{4, 0, 5, 6};
                 favToolIndex = favToolOptions[_correctCol]; 
                 break; 
-            case 2:
+            case 2: //Ridge
                 favToolOptions = new int[]{3, 2, 6, 1};
                 favToolIndex = favToolOptions[_correctCol]; 
                 break; 
-            case 3:
+            case 3: //Grafton
                 favToolOptions = new int[]{0, 5, 2, 4};
                 favToolIndex = favToolOptions[_correctCol]; 
                 break; 
-            case 4: 
-                favToolOptions = new int[]{6, 5, 3, 0};
+            case 4: //Willow
+                favToolOptions = new int[]{6, 4, 3, 0};
                 favToolIndex = favToolOptions[_correctCol]; 
                 break; 
-            case 5:
+            case 5: //Bleas
                 favToolOptions = new int[]{2, 1, 0, 5};
                 favToolIndex = favToolOptions[_correctCol]; 
                 break; 
         }
-        Debug.LogFormat("Phasmophobia {0}: The tool used to find the favorite room is the {1}.", moduleId, toolMats[favToolIndex].name);
+        Debug.LogFormat("[Phasmophobia {0}] The correct condition for Table 1 [L>R indexed at 1] is #{1}", moduleId, _correctCol+1);
+        Debug.LogFormat("[Phasmophobia {0}] The tool used to find the favorite room is the {1}.", moduleId, toolMats[favToolIndex].name);
 
         if (bomb.GetIndicators().Count() < 2 && locIndex != 0 && locIndex != 4) { correctCol = 0; }
         else if (bomb.GetPortPlates().Count() > 1 && locIndex != 1 && locIndex != 5) { correctCol = 1; }
         else if (bomb.GetBatteryCount() % 2 == 0) { correctCol = 2; }
         else { correctCol = 3; }
-		Debug.LogFormat("Phasmophobia #{0}: The correct condition for Table 2 [L>R indexed at 1] is #{1}", moduleId, correctCol+1);
+		Debug.LogFormat("[Phasmophobia #{0}] The correct condition for Table 2 [L>R indexed at 1] is #{1}", moduleId, correctCol+1);
     }
 
     IEnumerator SanityOverTime(){
@@ -961,26 +980,36 @@ public class PhasmophobiaScript : MonoBehaviour{
 
     IEnumerator Hunt(){
         huntNumber++; 
-        Debug.LogFormat("Phasmophobia #{0}: Began Hunt #{1}", moduleId, huntNumber);
+        Debug.LogFormat("[Phasmophobia #{0}] Began Hunt #{1}", moduleId, huntNumber);
         StopCoroutine(SanityOverTime());
         hunting = true; 
         StartCoroutine(Heartbeat());
         int it = 0; 
-        while (it<Math.Max(20, 34-2*huntNumber)){
+        while (it<Math.Max(14, 34-2*huntNumber)){
             while (roomIndex==0){
                 dNav.gameObject.SetActive(false);
                 break; 
             }
             flashLight.SetActive(false); 
-            yield return new WaitForSeconds(UnityEngine.Random.Range(0.05f, 0.20f)); 
+            float duration = UnityEngine.Random.Range(0.1f, 0.2f);
+            float elapsed = 0f; 
+            while (elapsed < duration){
+                yield return null;
+                elapsed += Time.deltaTime; 
+            }
             flashLight.SetActive(true); 
-            yield return new WaitForSeconds(UnityEngine.Random.Range(0.05f, 0.20f)); 
+            duration = UnityEngine.Random.Range(0.1f, 0.2f);
+            elapsed = 0f; 
+            while (elapsed < duration){
+                yield return null;
+                elapsed += Time.deltaTime; 
+            }
             it++; 
         }
         hunting = false; 
         if (inCloset == false || uLit == true || dLit == true){
             StartCoroutine(Strike()); 
-            Debug.LogFormat("Phasmophobia #{0}: You did not hide in the closet or turn off your tools in time.", moduleId);
+            Debug.LogFormat("[Phasmophobia #{0}] You did not hide in the closet or turn off your tools in time.", moduleId);
             yield break; 
         }
         else {  
@@ -993,9 +1022,14 @@ public class PhasmophobiaScript : MonoBehaviour{
     }
 
     IEnumerator Heartbeat(){
+        float elapsed = 1f; 
         while (hunting == true){
-            Audio.PlaySoundAtTransform("heart1", transform);
-            yield return new WaitForSeconds(1.0f);
+            if (elapsed >= 1f){
+                Audio.PlaySoundAtTransform("heart1", transform);
+                elapsed = 0f;
+            }
+            yield return null;
+            elapsed += Time.deltaTime; 
         }
         yield break; 
     }
@@ -1009,16 +1043,41 @@ public class PhasmophobiaScript : MonoBehaviour{
     }
 
     IEnumerator FavRoomFlicker(){
-        flickering = true; 
-        yield return new WaitForSeconds(0.1f);
+        flickering = true;
+        float duration = 0.1f;
+        float elapsed = 0f; 
+        while (elapsed < duration){
+            yield return null;
+            elapsed += Time.deltaTime; 
+        }
         flashLight.gameObject.SetActive(false); 
-        yield return new WaitForSeconds(0.2f);
+        duration = 0.2f;
+        elapsed = 0f; 
+        while (elapsed < duration){
+            yield return null;
+            elapsed += Time.deltaTime; 
+        }
         flashLight.gameObject.SetActive(true); 
-        yield return new WaitForSeconds(0.3f);
+        duration = 0.3f;
+        elapsed = 0f; 
+        while (elapsed < duration){
+            yield return null;
+            elapsed += Time.deltaTime; 
+        }
         flashLight.gameObject.SetActive(false); 
-        yield return new WaitForSeconds(0.2f);
+        duration = 0.2f;
+        elapsed = 0f; 
+        while (elapsed < duration){
+            yield return null;
+            elapsed += Time.deltaTime; 
+        }
         flashLight.gameObject.SetActive(true); 
-        yield return new WaitForSeconds(0.2f); 
+        duration = 0.2f;
+        elapsed = 0f; 
+        while (elapsed < duration){
+            yield return null;
+            elapsed += Time.deltaTime; 
+        }
         flickering = false; 
         yield break; 
     }

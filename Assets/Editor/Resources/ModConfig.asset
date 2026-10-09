@@ -11,12 +11,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 615501dbe4f3fe94fbf4b564abb10237, type: 3}
   m_Name: ModConfig
   m_EditorClassIdentifier: 
-  id: phasmophobiaModule
+  id: phasmophobia
   title: Phasmophobia
   author: ItsOlafDude
-  description: "Phasmophobia\nBy ItsOlafDude\n\nDefuser by day, ghost hunter by\u2014OH
-    GOD IT\u2019S A WRAITH\n\nCollect evidence to determine the type of ghost haunting
-    an abondoned house. \n\nModuleID: phasmophobiaModule\n"
-  version: 1.1
+  description: "Phasmophobia\r\nBy ItsOlafDude\r\n\r\n\"Defuser by day, ghost hunter
+    by\u2014OH GOD IT\u2019S A WRAITH\"\r\n\r\nCollect evidence to determine the type
+    of ghost haunting an abondoned house.\r\n\r\nInspired by Kinetic Games's Phasmophobia\r\n\r\nModuleID:
+    phasmophobia\r\nManual available at: https://ktane.timwi.de/HTML/Phasmophobia.html"
+  version: 1.9
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 77ccccf0001a66d4ca403c0845164967, type: 3}
